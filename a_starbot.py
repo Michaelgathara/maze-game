@@ -5,7 +5,7 @@ import queue
 
 
 class bot:
-    def init(self, start, current_pos, seen, cost, walls):
+    def init(self, start, current_pos, cost, walls):
         self.start = start
         self.current_pos = current_pos
         # self.seen = seen # I don't think we quite need this, should be dynamic below. The bot should be init with nothing being seen (except where it's at ofc)
@@ -39,11 +39,19 @@ class bot:
         time.sleep(0.25)
         frontier = queue.PriorityQueue()
         frontier.put((0, self.start))
+        seen = set()
         while frontier:
             _, current = frontier.get()
-            if current == goal:
+            if current is goal:
                 break # we should be done, no need to return cause the maze animation should stop. We don't need to traverse the entire maze imo
-             
+            for next_position in self.move(current):
+                new_cost = self.heuristic(goal) 
+                if next_position is goal:
+                    break
+                if next_position in seen:
+                    continue
+                if next_position not in self.walls and next_position not in frontier.queue:
+                    frontier.put((new_cost, next_position))
 
         # while True:
         #     while select.select([sys.stdin,],[],[],0.0)[0]:
@@ -57,11 +65,10 @@ class bot:
 
 start_bot_pos = (0.5, 0.5)
 current_bot_pos = start_bot_pos
-seen_set = set()
 cost = 0
 walls_pos = set()
 
 print("himynameis A* bot", flush=True)
-a_star_bot = bot(start_bot_pos, current_bot_pos, seen_set, cost, walls_pos)
+a_star_bot = bot(start_bot_pos, current_bot_pos, cost, walls_pos)
 # Should I call walls ?
 # a_star_bot.walls()
