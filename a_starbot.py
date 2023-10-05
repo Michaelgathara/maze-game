@@ -13,7 +13,7 @@ class bot:
         self.cost = cost
         self.walls = walls
 
-    def walls(self):
+    def init_walls(self):
         for i in range(0, 11):
             self.walls |= {
                 (i, 0, i + 0, 0),
@@ -61,7 +61,7 @@ class bot:
                 moves.append(left)
             if right not in self.walls:
                 moves.append(right)
-            
+            print("toward %s %s" % (moves[-1][0]+0.5, moves[-1][1]+0.5), flush=True)
             return moves
 
     def heuristic(self, goal):
@@ -104,4 +104,4 @@ walls_pos = set()
 
 print("himynameis A* bot", flush=True)
 a_star_bot = bot(start_bot_pos, current_bot_pos, cost, walls_pos)
-a_star_bot.walls()
+a_star_bot.init_walls()
