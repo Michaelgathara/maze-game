@@ -105,3 +105,5 @@ walls_pos = set()
 print("himynameis A* bot", flush=True)
 a_star_bot = bot(start_bot_pos, current_bot_pos, cost, walls_pos)
 a_star_bot.init_walls()
+# I just did 10.5,10.5 to test this will need to be the flag
+a_star_bot.solver((10.5,10.5))
