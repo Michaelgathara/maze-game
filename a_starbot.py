@@ -25,6 +25,7 @@ walls = set()
 def heuristic(pos):
     return abs(pos[0] - goal_x) + abs(pos[1] - goal_y)
 
+<<<<<<< HEAD
 # A* algorithm
 open_list = [(0, (0.5, 0.5))]
 came_from = {}
@@ -98,3 +99,18 @@ while True:
 
     time.sleep(1)
 
+=======
+start_bot_pos = (0.5, 0.5)
+current_bot_pos = start_bot_pos
+cost = 0
+walls_pos = set()
+seen = set(start_bot_pos)
+
+print("himynameis A* bot", flush=True)
+a_star_bot = bot(start_bot_pos, current_bot_pos, cost, walls_pos, seen)
+a_star_bot.init_walls()
+# I just did 10.5,10.5 to test this will need to be the flag
+a_star_bot.solver((10.5, 10.5))
+log.close()
+obsLog.close()
+>>>>>>> fe69189963fb184545fd66d944b0675f63678668
