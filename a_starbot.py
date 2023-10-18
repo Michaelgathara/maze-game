@@ -1,190 +1,74 @@
-# import sys
-# import select
-# import time
-# import heapq
-# import math
-
-# # Define constants for the maze dimensions
-# MAZE_SIZE = 11
-
-# # Define constants for the possible directions
-# DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-
-# # Define the initial position
-# x = 0
-# y = 0
-
-# # Define the goal position
-# goal_x = MAZE_SIZE
-# goal_y = MAZE_SIZE
-
-# # Create a set of walls known
-# walls = set()
-
-# # Heuristic function (Euclidean distance)
-# def heuristic(pos):
-#     return math.sqrt((pos[0] - goal_x) ** 2 + (pos[1] - goal_y) ** 2)
-
-# # A* algorithm
-# open_list = [(0, (0, 0))]
-# came_from = {}
-# g_scores = {(0, 0): 0}
-# f_scores = {(0, 0): heuristic((0, 0))}
-
-# # introduce ourselves, all friendly like
-# print("himynameis AStar-bot", flush=True)
-
-# # Wait a few seconds for some initial sense data
-# time.sleep(0.25)
-
-# while True:
-#     # while there is new input on stdin:
-#     while select.select([sys.stdin, ], [], [], 0.0)[0]:
-#         # read and process the next 1-line observation
-#         obs = sys.stdin.readline()
-#         obs = obs.split(" ")
-#         if obs == []:
-#             pass
-#         elif obs[0] == "bot":
-#             # update our own position
-#             x = int(float(obs[1]))
-#             y = int(float(obs[2]))
-#         elif obs[0] == "wall":
-#             x0 = int(float(obs[1]))
-#             y0 = int(float(obs[2]))
-#             x1 = int(float(obs[3]))
-#             y1 = int(float(obs[4]))
-#             walls.add((x0, y0, x1, y1))
-
-#     if (x, y) == (goal_x, goal_y):
-#         # If we have reached the goal, we can backtrack to find the path
-#         path = reconstruct_path(came_from, (x, y))
-#         path.reverse()
-#         print("Path:", path, flush=True)
-#     else:
-#         # Use A* algorithm to update the path
-#         current = (x, y)
-#         for dx, dy in DIRECTIONS:
-#             neighbor = (x + dx, y + dy)
-#             if neighbor in walls:
-#                 continue
-#             tentative_g_score = g_scores[current] + 1
-#             if neighbor not in g_scores or tentative_g_score < g_scores[neighbor]:
-#                 came_from[neighbor] = current
-#                 g_scores[neighbor] = tentative_g_score
-#                 f_scores[neighbor] = g_scores[neighbor] + heuristic(neighbor)
-#                 if (f_scores[neighbor], neighbor) not in open_list:
-#                     heapq.heappush(open_list, (f_scores[neighbor], neighbor))
-
-#         # Calculate the next move
-#         if open_list:
-#             current = min(open_list)[1]
-#             next_x, next_y = current
-#             x, y = next_x, next_y
-#             print("toward %s %s" % (x + 0.5, y + 0.5), flush=True)
-#         else:
-#             print("No valid path found.", flush=True)
-
-#     time.sleep(0.125)
-
-
-
 import sys
 import select
 import time
 import heapq
-import math
 
-# Define constants for the maze dimensions
 MAZE_SIZE = 11
-
-# Define constants for the possible directions
 DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
-# Define the initial position
-x = 0.5
-y = 0.5
-
-# Define the goal position
-goal_x = MAZE_SIZE - 0.5
-goal_y = MAZE_SIZE - 0.5
-
-# Create a set of walls known
+x, y = 0.5, 0.5
+goal_x, goal_y = MAZE_SIZE - 0.5, MAZE_SIZE - 0.5
 walls = set()
 
-# Heuristic function (Manhattan distance)
 def heuristic(pos):
     return abs(pos[0] - goal_x) + abs(pos[1] - goal_y)
 
-# A* algorithm
-open_list = [(0, (0.5, 0.5))]
-came_from = {}
-g_scores = {(0.5, 0.5): 0}
-f_scores = {(0.5, 0.5): heuristic((0.5, 0.5))}
+def reconstruct_path(came_from, current):
+    total_path = [current]
+    while current in came_from.keys():
+        current = came_from[current]
+        total_path.append(current)
+    return total_path
 
-# introduce ourselves, all friendly-like
 print("himynameis AStar-bot", flush=True)
-
-# Wait a few seconds for some initial sense data
 time.sleep(1)
 
+final_path = []
+path_found = False
 while True:
-    # while there is new input on stdin:
+    if not path_found:
+        open_list = [(0, (x, y))]
+        came_from = {}
+        g_scores = {(x, y): 0}
+        f_scores = {(x, y): heuristic((x, y))}
+
+        while open_list:
+            current = heapq.heappop(open_list)[1]
+
+            if current == (goal_x, goal_y):
+                final_path = reconstruct_path(came_from, current)
+                path_found = True
+                break
+
+            for dx, dy in DIRECTIONS:
+                neighbor = (current[0] + dx, current[1] + dy)
+                
+                if neighbor in walls:
+                    continue
+
+                tentative_g_score = g_scores[current] + 1
+
+                if neighbor not in g_scores or tentative_g_score < g_scores[neighbor]:
+                    came_from[neighbor] = current
+                    g_scores[neighbor] = tentative_g_score
+                    f_scores[neighbor] = tentative_g_score + heuristic(neighbor)
+                    heapq.heappush(open_list, (f_scores[neighbor], neighbor))
+
+    if path_found:
+        print("Path:", final_path, flush=True)
+        for next_move in reversed(final_path[1:]):
+            print("toward %s %s" % (next_move[0], next_move[1]), flush=True)
+            time.sleep(1)
+        break
+
     while select.select([sys.stdin, ], [], [], 0.0)[0]:
-        # read and process the next 1-line observation
         obs = sys.stdin.readline()
         obs = obs.split(" ")
         if obs == []:
             pass
         elif obs[0] == "bot":
-            # update our own position
-            x = float(obs[1])
-            y = float(obs[2])
+            x, y = float(obs[1]), float(obs[2])
         elif obs[0] == "wall":
-            x0 = int(float(obs[1]))
-            y0 = int(float(obs[2]))
-            x1 = int(float(obs[3]))
-            y1 = int(float(obs[4]))
-            walls.add((x0, y0, x1, y1))
-
-    if (x, y) == (goal_x, goal_y):
-        # If we have reached the goal, we can backtrack to find the path
-        path = reconstruct_path(came_from, (x, y))
-        path.reverse()
-        print("Path:", path, flush=True)
-    else:
-        # Use A* algorithm to update the path
-        current = (x, y)
-        valid_neighbors = []
-
-        for dx, dy in DIRECTIONS:
-            neighbor = (x + dx, y + dy)
-            if neighbor in walls:
-                continue
-            tentative_g_score = g_scores[current] + 1
-            if neighbor not in g_scores or tentative_g_score < g_scores[neighbor]:
-                came_from[neighbor] = current
-                g_scores[neighbor] = tentative_g_score
-                f_scores[neighbor] = g_scores[neighbor] + heuristic(neighbor)
-                valid_neighbors.append(neighbor)
-
-        if not valid_neighbors:
-            # No valid neighbors, backtrack
-            if current == (0.5, 0.5):
-                # We are back at the start, nowhere to go
-                print("Nowhere to go. Stopping.", flush=True)
-                break
-            else:
-                # Backtrack to the previous position
-                previous = came_from[current]
-                x, y = previous
-                print("toward %s %s" % (x, y), flush=True)
-                time.sleep(5)
-        else:
-            # Calculate the next move to a valid neighbor
-            next_x, next_y = min(valid_neighbors, key=lambda pos: f_scores[pos])
-            x, y = next_x, next_y
-            print("toward %s %s" % (x, y), flush=True)
-            time.sleep(5)
+            walls.add((int(float(obs[1])), int(float(obs[2])), int(float(obs[3])), int(float(obs[4]))))
 
     time.sleep(1)

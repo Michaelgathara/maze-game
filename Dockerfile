@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /root
 
-RUN git clone https://github.com/harp-lab/maze-game
+RUN git clone https://github.com/Michaelgathara/maze-game
 
 WORKDIR /root/maze-game
 
