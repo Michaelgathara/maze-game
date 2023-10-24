@@ -3,9 +3,30 @@ import sys
 import select
 import time
 from queue import PriorityQueue
+import logging
+import logging.handlers
+from queue import Queue
+import threading
 
-terminal = sys.stdout
-logger = open("logs/output.log", "w")
+log_queue = Queue(-1) 
+queue_handler = logging.handlers.QueueHandler(log_queue)
+logger = logging.getLogger('maze-logs')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(queue_handler)
+
+def log_writer(queue, log_filename):
+    file_handler = logging.FileHandler(log_filename)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+
+    while True:
+        record = queue.get()
+        if record is None: 
+            break
+        file_handler.handle(record)
+
+log_thread = threading.Thread(target=log_writer, args=(log_queue, 'logs/output.log'))
+log_thread.start()
 
 class Bot:
 
@@ -51,23 +72,33 @@ class Bot:
                 else:
                     possible_actions.append((x1, y1))  # move one tile
 
-        
+        # Handle backtracking
         if len(possible_actions) == 0:
             if self.backtrack_stack:
                 backtrack_to = self.backtrack_stack.pop()
                 possible_actions.append(backtrack_to)
             else:
-                self.dead |= {(self.tx, self.ty)}
+                self.dead.add((self.tx, self.ty))
         else:
             self.backtrack_stack.append((self.tx, self.ty))
 
         return possible_actions
+
     def astar(self):
-        if self.is_at_start and self.tx == self.home_x and self.ty == self.home_y:
+        if \
+             self.is_at_start \
+             and self.tx == self.home_x \
+             and self.ty == self.home_y:
+            
             self.is_at_start = False
             self.goal_x = 10
             self.goal_y = 10
-        elif not self.is_at_start and self.tx == self.goal_x and self.ty == self.goal_y:
+        elif \
+             not self.is_at_start \
+             and self.tx == self.goal_x \
+             and self.ty == self.goal_y:
+            
+
             self.is_at_start = True
             self.goal_x = self.home_x
             self.goal_y = self.home_y
@@ -81,9 +112,7 @@ class Bot:
 
         while not frontier.empty():
             _, current = frontier.get()
-            sys.stdout = logger
-            print(f"F: {frontier}")
-            sys.stdout = terminal
+            logger.info(frontier)
 
             for next_node in self.actions():
                 # check the type of possible actions and if it is right then give it a cost of 1, down a cost of 2, left a cost of 3 and up a cost of 4
@@ -179,9 +208,10 @@ if __name__ == "__main__":
                     bot.seen = set()
 
                 bot.path = bot.astar()
-            time.sleep(2)
+            time.sleep(0.5)
             print("toward %s %s" % (bot.path[-1][0] + 0.5, bot.path[-1][1] + 0.5), flush=True)
-            logger.debug()
+            logger.debug(bot.path)
             bot.path.pop()
         print("", flush=True)
         time.sleep(0.125)
+    
