@@ -30,23 +30,27 @@ class Bot:
         print("himynameis A* bot", flush=True)
         time.sleep(0.25)
 
-    def successors(self):
-        fs = frozenset()
-        for i in self.actions():
-            fs |= {i}
-        return fs
-
     def actions(self):
         possible_actions = []
 
-        if len(self.seen) > 0 and (self.tx, self.ty + 1) not in (self.dead | self.seen) and (self.tx, self.ty + 1, self.tx + 1, self.ty + 1) not in self.walls:
-            possible_actions.append((self.tx, self.ty + 1))  # move down
-        if len(self.seen) > 0 and (self.tx + 1, self.ty) not in (self.dead | self.seen) and (self.tx + 1, self.ty, self.tx + 1, self.ty + 1) not in self.walls:
-            possible_actions.append((self.tx + 1, self.ty))  # move right
-        if len(self.seen) > 0 and (self.tx, self.ty - 1) not in (self.dead | self.seen) and (self.tx, self.ty, self.tx + 1, self.ty) not in self.walls:
-            possible_actions.append((self.tx, self.ty - 1))  # move up
-        if len(self.seen) > 0 and (self.tx - 1, self.ty) not in (self.dead | self.seen) and (self.tx, self.ty, self.tx, self.ty + 1) not in self.walls:
-            possible_actions.append((self.tx - 1, self.ty))  # move left
+        # if len(self.seen) > 0 and (self.tx, self.ty + 1) not in (self.dead | self.seen) and (self.tx, self.ty + 1, self.tx + 1, self.ty + 1) not in self.walls:
+        #     possible_actions.append((self.tx, self.ty + 1))  # move down
+        # if len(self.seen) > 0 and (self.tx + 1, self.ty) not in (self.dead | self.seen) and (self.tx + 1, self.ty, self.tx + 1, self.ty + 1) not in self.walls:
+        #     possible_actions.append((self.tx + 1, self.ty))  # move right
+        # if len(self.seen) > 0 and (self.tx, self.ty - 1) not in (self.dead | self.seen) and (self.tx, self.ty, self.tx + 1, self.ty) not in self.walls:
+        #     possible_actions.append((self.tx, self.ty - 1))  # move up
+        # if len(self.seen) > 0 and (self.tx - 1, self.ty) not in (self.dead | self.seen) and (self.tx, self.ty, self.tx, self.ty + 1) not in self.walls:
+        #     possible_actions.append((self.tx - 1, self.ty))  # move left
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # down, right, up, left
+        for dx, dy in directions:
+            x1, y1 = self.tx + dx, self.ty + dy
+            x2, y2 = self.tx + 2*dx, self.ty + 2*dy
+            if (x1, y1) not in (self.dead | self.seen) and (x1, y1, x1 + dx, y1 + dy) not in self.walls:
+                if (x2, y2) not in (self.dead | self.seen) and (x2, y2, x2 + dx, y2 + dy) not in self.walls:
+                    possible_actions.append((x2, y2))  # move two tiles
+                else:
+                    possible_actions.append((x1, y1))  # move one tile
+
         
         if len(possible_actions) == 0:
             if self.backtrack_stack:
@@ -82,10 +86,17 @@ class Bot:
             sys.stdout = terminal
 
             for next_node in self.actions():
-                dx = abs(current[0] - next_node[0])
-                dy = abs(current[1] - next_node[1])
-                cost = 1.414 if dx == 1 and dy == 1 else 1  # 1.414 is sqrt(2), the diagonal distance
-                
+                # check the type of possible actions and if it is right then give it a cost of 1, down a cost of 2, left a cost of 3 and up a cost of 4
+                cost = 1
+                # if next_node[1] < current[1]:
+                #     cost = 4  # up
+                # elif next_node[0] > current[0]:
+                #     cost = 3  # left
+                # elif next_node[1] > current[1]:
+                #     cost = 1  # down
+                # else:
+                #     cost = 2  # right
+
                 new_cost = cost_so_far[current] + cost
                 try:
                     if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
@@ -104,14 +115,23 @@ class Bot:
         self.planned_path = path
         return path
 
-    def heuristic(self, goal, current):
+    def heuristic(self, goal, current): #Euc distance
         return math.sqrt((goal[0] - current[0]) ** 2 + (goal[1] - current[1]) ** 2)
     
+    def m_heuritic(self, goal, current):
+        return abs(goal[0] - current[0]) + abs(goal[1] - current[1])
+    
+    def c_heuristic(self, goal, current):
+        """
+        TRASH"""
+        first = abs(goal[0] - current[0])
+        second = abs(goal[1] - current[1])
+        return max(first, second)
 
 if __name__ == "__main__":
     bot = Bot()
     # bot.main()
-
+    recalc = False
     while True:
         while select.select([sys.stdin, ], [], [], 0.0)[0]:
             obs = sys.stdin.readline()
@@ -125,18 +145,24 @@ if __name__ == "__main__":
                         (x - (int(x) + 0.5)) ** 2 + (y - (int(y) + 0.5)) ** 2) ** 0.5 < 0.2:
                     bot.tx = int(x)
                     bot.ty = int(y)
+
                     if not bot.path:
                         bot.path = [(bot.tx, bot.ty)]
                         bot.home_x = bot.tx
                         bot.home_y = bot.ty
                         bot.seen = set(bot.path)
+                        recalc = True
             elif obs[0] == "wall":
                 x0 = int(float(obs[1]))
                 y0 = int(float(obs[2]))
                 x1 = int(float(obs[3]))
                 y1 = int(float(obs[4]))
                 bot.walls |= {(x0, y0, x1, y1)}
-                
+                recalc = True
+        if recalc:
+            bot.path = bot.astar()
+            recalc = False
+
         if bot.path:
             if len(bot.path) > 0 and bot.path[-1] == (bot.tx, bot.ty):
                 bot.seen |= {(bot.tx, bot.ty)}
@@ -155,5 +181,7 @@ if __name__ == "__main__":
                 bot.path = bot.astar()
             time.sleep(2)
             print("toward %s %s" % (bot.path[-1][0] + 0.5, bot.path[-1][1] + 0.5), flush=True)
+            logger.debug()
+            bot.path.pop()
         print("", flush=True)
         time.sleep(0.125)
