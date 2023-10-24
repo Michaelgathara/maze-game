@@ -864,10 +864,12 @@ class Game {
         renderMaze();
         if (verbose) cout << "Maze Rendered" << endl;
 
-        Robot *bot = new Robot(agentcmd, 0.5, 0.5);
+        float x = 6.5;
+        float y = 10.5;
+        Robot *bot = new Robot(agentcmd, x, y);
         players.push_back(bot);
         if (verbose) cout << "Player Initialized" << endl;
-        objects.push_back(new Home(0.5, 0.5));
+        objects.push_back(new Home(x, y));
         objects.push_back(new Flag());
     }
 
