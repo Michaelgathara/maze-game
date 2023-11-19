@@ -14,6 +14,5 @@ dfsbot:
 
 randobot:
 	make default && ./server 'python3 randobot.py'
-
-a_starbot:
-	make default && ./server 'python3 a_starbot.py'
+stupidbot:
+	make default && ./server 'python3 stupid_bot.py'
