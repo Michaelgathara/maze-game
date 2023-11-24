@@ -110,6 +110,8 @@
 2023-10-24 03:31:41,814 - maze-logs - WARNING - The possible actions: [(7, 10), (5, 10)]
 2023-10-24 03:31:41,814 - maze-logs - ERROR - The priority queue: (4.0, (7, 10))
 2023-10-24 03:31:41,814 - maze-logs - ERROR - The priority queue: (6.0, (5, 10))
+
+
 2023-10-24 03:31:41,814 - maze-logs - WARNING - The possible actions: [(7, 10), (5, 10)]
 2023-10-24 03:31:41,814 - maze-logs - WARNING - The possible actions: [(7, 10), (5, 10)]
 2023-10-24 03:31:49,326 - maze-logs - WARNING - The possible actions: [(4, 10)]
