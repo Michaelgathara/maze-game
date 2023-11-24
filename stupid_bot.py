@@ -4,7 +4,6 @@ import select
 import time
 import random
 from queue import PriorityQueue
-from queue import PriorityQueue
 import logging
 import logging.handlers
 from queue import Queue
@@ -118,10 +117,10 @@ while True:
     
     frontier = PriorityQueue()
     
-    if len(seen) > 0 and (tx,ty+1) not in dead|seen and (tx,ty+1,tx+1,ty+1) not in walls:
-      frontier.put((manhattan_distance(tx,ty+1),(tx,ty+1)))  # move down
     if len(seen) > 0 and (tx+1,ty) not in dead|seen and (tx+1,ty,tx+1,ty+1) not in walls:
       frontier.put((manhattan_distance(tx+1,ty),(tx+1,ty))) # move right
+    if len(seen) > 0 and (tx,ty+1) not in dead|seen and (tx,ty+1,tx+1,ty+1) not in walls:
+      frontier.put((manhattan_distance(tx,ty+1),(tx,ty+1)))  # move down
     if len(seen) > 0 and (tx,ty-1) not in dead|seen and (tx,ty,tx+1,ty) not in walls:
       frontier.put((manhattan_distance(tx,ty-1),(tx,ty-1)))  # move up
     if len(seen) > 0 and (tx-1,ty) not in dead|seen and (tx,ty,tx,ty+1) not in walls:

@@ -20,3 +20,6 @@ a_starbot:
 
 stupid:
 	make default && ./server 'python3 stupid_bot.py'
+
+huh:
+	make default && ./server 'python3 huh_bot.py'

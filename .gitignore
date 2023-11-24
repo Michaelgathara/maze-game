@@ -2,3 +2,5 @@ out/
 server
 x.py
 y.py
+out.mp4
+out*
