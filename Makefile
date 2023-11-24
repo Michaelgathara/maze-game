@@ -17,3 +17,6 @@ randobot:
 
 a_starbot:
 	make default && ./server 'python3 a_starbot.py'
+
+stupid:
+	make default && ./server 'python3 stupid_bot.py'

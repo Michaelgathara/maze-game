@@ -4,6 +4,31 @@ import select
 import time
 import random
 from queue import PriorityQueue
+from queue import PriorityQueue
+import logging
+import logging.handlers
+from queue import Queue
+import threading
+
+log_queue = Queue(-1) 
+queue_handler = logging.handlers.QueueHandler(log_queue)
+logger = logging.getLogger('maze-logs')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(queue_handler)
+
+def log_writer(queue, log_filename):
+    file_handler = logging.FileHandler(log_filename)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+
+    while True:
+        record = queue.get()
+        if record is None: 
+            break
+        file_handler.handle(record)
+
+log_thread = threading.Thread(target=log_writer, args=(log_queue, 'logs/output.log'))
+log_thread.start()
 
 # works but now its cooking time could do d lite?
 # current exact position
@@ -68,7 +93,7 @@ while True:
       y1 = int(float(obs[4]))
       walls |= {(x0,y0,x1,y1)}
     
-    if obs[3]==
+    # if obs[3]==
 
   # if we've achieved our goal, update our plan and issue a new command
   if len(plan) > 0 and plan[-1] == (tx,ty):
