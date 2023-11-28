@@ -23,3 +23,6 @@ stupid:
 
 huh:
 	make default && ./server 'python3 huh_bot.py'
+
+d:
+	make default && ./server 'python3 d_bot.py'

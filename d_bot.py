@@ -16,43 +16,38 @@ goal_x, goal_y = 10, 10
 ty = -1
 tx = -1
 
-# number of signals before start:
-start_timeout_signals = 10
+class WallManager:
+    def __init__(self) -> None:
+        self.processed = set()
+        self.new_walls = set()
+        self.init_walls()
 
-# set of walls known
-processed_walls = set()
-new_walls = set()
-for i in range(0, 11):
-    new_walls |= {
-        (i, 0, i + 0, 0),
-        (i, 11, i + 1, 11),
-        (0, i, 0, i + 1),
-        (11, i, 11, i + 1),
-    }
+    def init_walls(self):
+        for i in range(0, 11):
+            self.new_walls |= {
+                (i, 0, i + 0, 0),
+                (i, 11, i + 1, 11),
+                (0, i, 0, i + 1),
+                (11, i, 11, i + 1),
+            }
+    
+    def update_walls(self):
+        self.processed.update(self.new_walls)
+        self.new_walls = set()
+    
+    def up(self, x, y):
+        return (x, y, x + 1, y)
 
+    def down(self, x, y):
+        return (x, y + 1, x + 1, y + 1)
 
-# walls functions
-def up_wall(x, y):
-    return (x, y, x + 1, y)
+    def right(self, x, y):
+        return (x + 1, y, x + 1, y + 1)
 
+    def left(self, x, y):
+        return (x, y, x, y + 1)
 
-def down_wall(x, y):
-    return (x, y + 1, x + 1, y + 1)
-
-
-def right_wall(x, y):
-    return (x + 1, y, x + 1, y + 1)
-
-
-def left_wall(x, y):
-    return (x, y, x, y + 1)
-
-
-def update_walls():
-    global processed_walls, new_walls
-    processed_walls.update(new_walls)  # add walls to processed
-    new_walls = set()  # reset the new walls set
-
+wall_manager = WallManager()
 
 # D*
 opt_plan = []
@@ -65,31 +60,31 @@ gave_up = False
 
 
 class Plan:
-    def __init__(self, x, y, gx, gy):
+    def __init__(self, x, y, goal_x, goal_y):
         self.x = x
         self.y = y
-        self.gx = gx
-        self.gy = gy
+        self.goal_x = goal_x 
+        self.goal_y = goal_y
         self.plan = []
         self.cost = 0
 
     def actions(self):
         actions_set = []
-        if (self.x + 1, self.y) not in dead | traversed and right_wall(
+        if (self.x + 1, self.y) not in dead | traversed and wall_manager.right(
             self.x, self.y
-        ) not in processed_walls:
+        ) not in wall_manager.processed:
             actions_set.append((self.x + 1, self.y))  # move right
-        if (self.x - 1, self.y) not in dead | traversed and left_wall(
+        if (self.x, self.y + 1) not in dead | traversed and wall_manager.down(
             self.x, self.y
-        ) not in processed_walls:
-            actions_set.append((self.x - 1, self.y))  # move left
-        if (self.x, self.y + 1) not in dead | traversed and down_wall(
-            self.x, self.y
-        ) not in processed_walls:
+        ) not in wall_manager.processed:
             actions_set.append((self.x, self.y + 1))  # move down
-        if (self.x, self.y - 1) not in dead | traversed and up_wall(
+        if (self.x - 1, self.y) not in dead | traversed and wall_manager.left(
             self.x, self.y
-        ) not in processed_walls:
+        ) not in wall_manager.processed:
+            actions_set.append((self.x - 1, self.y))  # move left
+        if (self.x, self.y - 1) not in dead | traversed and wall_manager.up(
+            self.x, self.y
+        ) not in wall_manager.processed:
             actions_set.append((self.x, self.y - 1))  # move up
         return actions_set
 
@@ -108,13 +103,13 @@ class Plan:
         return successor_set
 
     def goal_distance(self):
-        distance = abs(self.gx - self.x) + abs(self.gy - self.y)
+        distance = abs(self.goal_x - self.x) + abs(self.goal_y - self.y)
         return distance
 
     def __lt__(self, other):
         return self.eval() < other.eval()
 
-    def eval(self):  # evaluate
+    def eval(self):
         return self.cost + self.goal_distance()
 
 
@@ -195,25 +190,19 @@ while True:
             y0 = int(float(obs[2]))
             x1 = int(float(obs[3]))
             y1 = int(float(obs[4]))
-            if (x0, y0, x1, y1) not in processed_walls:
-                new_walls |= {
+            if (x0, y0, x1, y1) not in wall_manager.processed:
+                wall_manager.new_walls |= {
                     (x0, y0, x1, y1)
                 }  # added to new walls first to check if they affect the plan
         # elif obs[0] == "observed":
         #   seen.add((int(obs[1]), int(obs[2])))
 
-    # wait for # signals before start
-    if start_timeout_signals > 0:
-        start_timeout_signals -= 1
-        pass
-
-    # just start (again)
     # if len(opt_plan) == 0 and (tx, ty) in seen:
-    if len(opt_plan) == 0 and start_timeout_signals == 0:
+    if len(opt_plan) == 0:
         # print("comment start planning", flush=True)
         # start planning
         traversed = {(tx, ty)}
-        update_walls()
+        wall_manager.update_walls()
         planner = planning((tx, ty))
         # initial plan
         if planner is not None and len(planner.plan) > 0:
@@ -244,39 +233,41 @@ while True:
 
         # check for new walls:
         if (
-            len(new_walls) == 0
+            len(wall_manager.new_walls) == 0
         ):  # no new walls detected -> execute next step in opt_plan
             # print("comment No new wall moving on", flush=True)
             traversed |= {(tx, ty)}
             follow_plan()
-        else:  # detected new walls
+        else:  # detected new walls, check if affect the opt_plan
+            # print("comment New wall detected", flush=True)
             fault_index = 0
             for i in range(exec_index, len(opt_plan) - 1):
                 if (
                     (
                         (opt_plan[i + 1][0] - opt_plan[i][0] == 1)
-                        and right_wall(opt_plan[i][0], opt_plan[i][1]) in new_walls
+                        and wall_manager.right(opt_plan[i][0], opt_plan[i][1]) in wall_manager.new_walls
                     )
                     or (
                         (opt_plan[i + 1][1] - opt_plan[i][1] == 1)
-                        and down_wall(opt_plan[i][0], opt_plan[i][1]) in new_walls
+                        and wall_manager.down(opt_plan[i][0], opt_plan[i][1]) in wall_manager.new_walls
                     )
                     or (
                         (opt_plan[i + 1][0] - opt_plan[i][0] == -1)
-                        and left_wall(opt_plan[i][0], opt_plan[i][1]) in new_walls
+                        and wall_manager.left(opt_plan[i][0], opt_plan[i][1]) in wall_manager.new_walls
                     )
                     or (
                         (opt_plan[i + 1][1] - opt_plan[i][1] == -1)
-                        and up_wall(opt_plan[i][0], opt_plan[i][1]) in new_walls
+                        and wall_manager.up(opt_plan[i][0], opt_plan[i][1]) in wall_manager.wall_manager.new_walls
                     )
                 ):
                     fault_index = i
                     break
-            update_walls()
+            wall_manager.update_walls()()
             if fault_index == 0:  # new walls not affect current plan, moving on
                 # print("comment New wall not affect plan, moving on", flush=True)
                 follow_plan()
             else:  # affected. re-planning
+                # print("comment New wall affect plan recalibrating", flush=True)
                 while True:
                     planner = planning(
                         opt_plan[exec_index]
@@ -287,7 +278,8 @@ while True:
                         ]  # cut off the invalid moves
                         opt_plan = opt_plan + planner.plan  # add the new plan
                         break
-                    else:  # Not solvable
+                    else:  # cannot solve, try to backtrack (hit dead end)
+                        # print("comment dead end: %s pos:(%s, %s)" % (fault_index, opt_plan[fault_index][0],opt_plan[fault_index][1]), flush=True)
                         while True:
                             current_step = opt_plan[exec_index]
                             bt_planner = Plan(current_step[0], current_step[0][1])
@@ -299,13 +291,18 @@ while True:
                             backtrack_plan.append[
                                 opt_plan[exec_index]
                             ]  # create a backtrack plan
+                            # traversed.discard(current_step)
                             dead |= {current_step}
-                        if exec_index == 0:
+                        if exec_index == 0:  # hit start position, maze unsolvable
+                            # print("comment cannot solve maze after back track planning", flush=True)
                             gave_up = True
-                if (tx, ty) == opt_plan[exec_index]:
+                if (tx, ty) == opt_plan[exec_index]:  
                     follow_plan()
                 elif len(backtrack_plan) > 0:
+                    # print("comment finish recalibrating ran to dead end, backtracking", flush=True)
                     back_track()
+                else:
+                    print("comment unknown error", flush=True)
 
     print("", flush=True)
     time.sleep(0.1)

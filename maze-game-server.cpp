@@ -1039,11 +1039,11 @@ void Game::winningScreen()
                         WestGravity);
 
   final_img.fontPointsize(40);
-  final_img.annotate(players[0]->getName()+" captured " + to_string(players[0]->getflagCount())+" Flags & "+ to_string(players[0]->total_coin_collected) + " Coins",
+  final_img.annotate(players[0]->getName()+" captured " + to_string(players[0]->getflagCount())+"\nFlags & "+ to_string(players[0]->total_coin_collected) + " Coins",
                       Geometry(350, 50, hoz-70, 590),
                       WestGravity);  
 
-  final_img.annotate(players[1]->getName()+" captured " + to_string(players[1]->getflagCount())+" Flags & "+ to_string(players[1]->total_coin_collected) + " Coins",
+  final_img.annotate(players[1]->getName()+" captured " + to_string(players[1]->getflagCount())+"\nFlags & "+ to_string(players[1]->total_coin_collected) + " Coins",
                       Geometry(350, 50, hoz-70, 640),
                       WestGravity);
     for(int i=0;i<16;i++)
