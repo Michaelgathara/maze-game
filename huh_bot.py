@@ -267,7 +267,7 @@ def execute_robot():
                         else: 
                             while True:
                                 current_step = curr_plan[idx]
-                                bt_planner = Plan(current_step[0], current_step[0][0])
+                                bt_planner = Plan(current_step[0][0], current_step[0][1])
                                 if (
                                     len(bt_planner.actions()) > 0 or idx == 0
                                 ): 
