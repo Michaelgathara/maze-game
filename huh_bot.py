@@ -145,9 +145,8 @@ def execute_robot():
     global curr_plan
     global just_in_case
     global idx
-    global traversed 
+    global traversed
     global dead
-    traversed, dead = set(), set()
 
     print("himynameis group6", flush=True)
     time.sleep(0.5)
@@ -268,7 +267,7 @@ def execute_robot():
                         else: 
                             while True:
                                 current_step = curr_plan[idx]
-                                bt_planner = Plan(current_step[0], current_step[0][1])
+                                bt_planner = Plan(current_step[0], current_step[0][0])
                                 if (
                                     len(bt_planner.actions()) > 0 or idx == 0
                                 ): 
