@@ -47,6 +47,22 @@ class WallManager:
     @staticmethod
     def left(x, y):
         return (x, y, x, y + 1)
+    
+    @staticmethod
+    def up_right(x, y):
+        return [(x + 1, y, x + 1, y + 1), (x, y, x + 1, y)]
+
+    @staticmethod
+    def up_left(x, y):
+        return [(x, y, x, y + 1), (x - 1, y, x, y)]
+
+    @staticmethod
+    def down_right(x, y):
+        return [(x + 1, y + 1, x + 1, y + 2), (x, y + 1, x + 1, y + 1)]
+
+    @staticmethod
+    def down_left(x, y):
+        return [(x, y + 1, x, y + 2), (x - 1, y + 1, x, y + 1)]
 
 wall_manager = WallManager()
 curr_plan = []
@@ -66,24 +82,72 @@ class Plan:
         self.cost = 0
 
     def actions(self):
+        depth = [1]
         actions_set = []
+        for step in depth:
+            if (self.x + step, self.y) not in dead | traversed and wall_manager.right(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x + step, self.y))  # move right
+            if (self.x - step, self.y) not in dead | traversed and wall_manager.left(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x - step, self.y))  # move left
+            if (self.x, self.y + step) not in dead | traversed and wall_manager.down(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x, self.y + step))  # move down
+            if (self.x, self.y - step) not in dead | traversed and wall_manager.up(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x, self.y - step))  # move up
+
+        """
         if (self.x + 1, self.y) not in dead | traversed and wall_manager.right(
-            self.x, self.y
-        ) not in wall_manager.processed:
-            actions_set.append((self.x + 1, self.y))  # move right
-        if (self.x - 1, self.y) not in dead | traversed and wall_manager.left(
-            self.x, self.y
-        ) not in wall_manager.processed:
-            actions_set.append((self.x - 1, self.y))  # move left
-        if (self.x, self.y + 1) not in dead | traversed and wall_manager.down(
-            self.x, self.y
-        ) not in wall_manager.processed:
-            actions_set.append((self.x, self.y + 1))  # move down
-        if (self.x, self.y - 1) not in dead | traversed and wall_manager.up(
-            self.x, self.y
-        ) not in wall_manager.processed:
-            actions_set.append((self.x, self.y - 1))  # move up
-        return actions_set
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x + 1, self.y))  # move right
+            if (self.x - 1, self.y) not in dead | traversed and wall_manager.left(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x - 1, self.y))  # move left
+            if (self.x, self.y + 1) not in dead | traversed and wall_manager.down(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x, self.y + 1))  # move down
+            if (self.x, self.y - 1) not in dead | traversed and wall_manager.up(
+                self.x, self.y
+            ) not in wall_manager.processed:
+                actions_set.append((self.x, self.y - 1))  # move up"""
+        # steps = 4
+        # if self.is_diagonal_move_valid("up_right"):
+        #     actions_set.append((self.x + steps, self.y - steps))  # move up-right
+        # if self.is_diagonal_move_valid("up_left"):
+        #     actions_set.append((self.x - steps, self.y - steps))  # move up-left
+        # if self.is_diagonal_move_valid("down_right"):
+        #     actions_set.append((self.x + steps, self.y + steps))  # move down-right
+        # if self.is_diagonal_move_valid("down_left"):
+        #     actions_set.append((self.x - steps, self.y + steps))  # move down-left
+
+        return list(set(actions_set))
+
+    def is_diagonal_move_valid(self, direction):
+        # Check for walls and presence of multiple tiles in the diagonal direction
+        steps = 4
+        if direction == "up_right":
+            return (self.x + steps, self.y - steps) not in dead | traversed and \
+                   all(wall not in wall_manager.processed for wall in wall_manager.up_right(self.x, self.y))
+        if direction == "up_left":
+            return (self.x - steps, self.y - steps) not in dead | traversed and \
+                   all(wall not in wall_manager.processed for wall in wall_manager.up_left(self.x, self.y))
+        if direction == "down_right":
+            return (self.x + steps, self.y + steps) not in dead | traversed and \
+                   all(wall not in wall_manager.processed for wall in wall_manager.down_right(self.x, self.y))
+        if direction == "down_left":
+            return (self.x - steps, self.y + steps) not in dead | traversed and \
+                   all(wall not in wall_manager.processed for wall in wall_manager.down_left(self.x, self.y))
+
+        return False
 
     def move(self, action):
         new_plan = copy.deepcopy(self)
@@ -128,8 +192,7 @@ def back_track():
     next_step = just_in_case[0]
     print("toward %s %s" % (next_step[0] + 0.5, next_step[1] + 0.5), flush=True)
 
-def flip_goal():
-    print(f"comment Flip Goal")
+def new_goal():
     global home_x, home_y, goal_y, goal_x
     home_x, goal_x = goal_x, home_x
     home_y, goal_y = goal_y, home_y
@@ -137,7 +200,6 @@ def flip_goal():
 def to_follow():
     global idx, curr_plan
     idx += 1
-    print(f"comment {idx}")
     try:
         next_step = curr_plan[idx]
     except:
@@ -182,7 +244,7 @@ def execute_robot():
                 y = float(obs[2])
                 # print(f"comment at {x} and {y}")
                 if x > 9.9 and y > 9.9 and atbottom == False and commands < 1:
-                    flip_goal()
+                    new_goal()
                     atbottom = True
                 commands += 1
                 # update when inside the tiles or something like that
@@ -226,7 +288,7 @@ def execute_robot():
         elif len(curr_plan) > 0 and curr_plan[idx] == (tx, ty):
             if ((curr_plan[idx][0] == goal_x) and (curr_plan[idx][1] == goal_y)) or ((curr_plan[idx][0] == goal_x + 0.5) and (curr_plan[idx][1] == goal_y + 0.5)):
                 atbottom = True
-                flip_goal()
+                new_goal()
                 curr_plan = []
                 idx = 0
                 traversed = set()
