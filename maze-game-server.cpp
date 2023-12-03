@@ -1314,6 +1314,7 @@ string Game::writeRenderViewFrom(Robot *bot, set<IElem *> &visible)
   }
   out += "bot " + to_string(x) + " " + to_string(y) + " " + to_string(bot->getcoinCount()) + "\n";
   for (IElem *el : nearby)
+<<<<<<< HEAD
   {
     out += el->writeStatus() + "\n";
   }
@@ -1322,6 +1323,16 @@ string Game::writeRenderViewFrom(Robot *bot, set<IElem *> &visible)
     out += la->line->writeStatus() + "\n";
     visible.insert(la->line);
   }
+=======
+  {
+    out += el->writeStatus() + "\n";
+  }
+  for (const LineAngle *la : finalSet)
+  {
+    out += la->line->writeStatus() + "\n";
+    visible.insert(la->line);
+  }
+>>>>>>> e4a5283d480666d528ea5709571eff82fd81ea27
   return out;
 }
 
@@ -1333,9 +1344,15 @@ void Game::play1()
   while (framecount < framelimit)
   {
     frametime = mytime();
+<<<<<<< HEAD
 
     set<IElem *> visible;
 
+=======
+
+    set<IElem *> visible;
+
+>>>>>>> e4a5283d480666d528ea5709571eff82fd81ea27
     // Simulate all players
     for (Robot *bot : players)
     {
